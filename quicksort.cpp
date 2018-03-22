@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cstdlib>
 #include <signal.h>
 #include <sys/times.h>  /* times() */
 #include <unistd.h>     /* sysconf() */

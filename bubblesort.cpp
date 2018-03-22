@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <signal.h>
+#include <cstdlib>
 #include <sys/times.h>  /* times() */
 #include <unistd.h>     /* sysconf() */
 #include "utility.h"
@@ -11,7 +12,7 @@ int main(int argc, char* argv[])
 	double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
 	ticspersec = (double) sysconf(_SC_CLK_TCK);
 	t1 = (double) times(&tb1);
-	
+
 
 	char* fileName = "";
 	int start;
