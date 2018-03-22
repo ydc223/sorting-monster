@@ -28,7 +28,7 @@ utility.o: utility.cpp
 	g++ -c utility.cpp 
 
 clean:
-	rm -rf *o mysorter shellsort quicksort bubblesort
+	rm -rf *o mysorter shellsort quicksort bubblesort main
 
 $(OBJECTS): utility.h
 
