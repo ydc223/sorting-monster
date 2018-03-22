@@ -89,7 +89,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
   // printf("low: %d numofRecord: %d, depth: %d\n", low, numOfrecords, depth );
   Record * recordsMerged;
   int size = numOfrecords - (numOfrecords/2+low/2);
-  int high = numOfrecords/2+low/2;
+  int mid = numOfrecords/2+low/2;
 
   if (depth - 1 != 0) {
     //fork before proceeding
@@ -104,14 +104,19 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
       exit(1);
     }
 
-    // high = rand() % 30 + 1985;
+    if(random){
+       cout<<"Mid if rand: " << mid<<"  "<< low <<":"<<low+size<<endl;
+
+      mid = rand() % numOfrecords + low;
+    }
+    
     if((cpid = fork()) == 0) {
       //Child 1
       double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
       ticspersec = (double) sysconf(_SC_CLK_TCK);
       t1 = (double) times(&tb1);
 
-      Record* recordsMerged1 = split(filename, atrNumChar, depth - 1, low, high, rootPid, totalRecords, random);
+      Record* recordsMerged1 = split(filename, atrNumChar, depth - 1, low, mid, rootPid, totalRecords, random);
       close(fd1[0]);
       printToPipe(recordsMerged1, size, fd1[1]);
 
@@ -130,7 +135,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         t1 = (double) times(&tb1);
 
         
-        Record* recordsMerged2 = split(filename, atrNumChar, depth - 1, high, numOfrecords, rootPid, totalRecords, random); 
+        Record* recordsMerged2 = split(filename, atrNumChar, depth - 1, mid, numOfrecords, rootPid, totalRecords, random); 
         close(fd2[0]);
         printToPipe(recordsMerged2, size, fd2[1]);
 
@@ -166,11 +171,16 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
       exit(1);
     }
 
+    if(random){
+      cout<<"Mid if rand: " << mid<<"  "<< low <<":"<<low+size<<endl;
+      mid = rand() % size + low;
+    }
+
 
     if((cpid = fork()) == 0) {
       //child 1
       close(fd1[0]);
-      callExec(filename, low, high, atrNumChar, fd1[1], rootPid, totalRecords);
+      callExec(filename, low, mid, atrNumChar, fd1[1], rootPid, totalRecords);
       perror("exec failure.. ");
       exit(1);
     } else {
@@ -179,7 +189,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         //child 2 
         // close reading end
         close(fd2[0]);
-        callExec(filename, high, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords);
+        callExec(filename, mid, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords);
         perror("exec failure.. ");
         exit(1);
       } else {
@@ -281,8 +291,8 @@ int main(int argc, char* argv[])
   lSize = ftell (fpb);
   rewind (fpb);
   numOfrecords = (int) lSize/ SIZEofBUFF;
-  printf("Records found in file %d \n", numOfrecords);
-  numOfrecords = 20;
+  // printf("Records found in file %d \n", numOfrecords);
+  numOfrecords = 160;
   
   signal(SIGUSR1, handle_sigusr1);
   signal(SIGUSR2, handle_sigusr2); 

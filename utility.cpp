@@ -72,7 +72,7 @@ void printToPipe(Record* records, int numberOfRecords, int fd){
 	}
 
 	// maybe comment out?
-    close(fd);
+    // close(fd);
     // kill(getppid(), SIGUSR1);
 }
 
@@ -83,7 +83,6 @@ void printToFile(char* filename, Record* sortedRecords, int numOfrecords) {
         printf("Error opening file!\n");
         exit(1);
     }
-    // printToPipe(sortedRecords, numOfrecords, f);
     for(int i = 0; i < numOfrecords; i++) {
       fprintf(f, "Tax Number: %d, Name: %s %s, Income: %f\n", sortedRecords[i].taxNum, sortedRecords[i].firstName.c_str(), sortedRecords[i].lastName.c_str(), sortedRecords[i].income);
     }
@@ -241,14 +240,14 @@ void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t
   char fdStr[30];
   char root[30];
 
-  sprintf(fdStr, "%d", fd);
-  sprintf(start, "%d", low);
-  sprintf(end, "%d", high);
-  sprintf(root, "%ld", (long)rootPid);   
+  // sprintf(fdStr, "%d", fd);
+  // sprintf(start, "%d", low);
+  // sprintf(end, "%d", high);
+  // sprintf(root, "%ld", (long)rootPid);   
 
   int size = high - low;
   int processNum = totalRecords/size - (totalRecords - low)/size;
-  printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
+  // printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
   if(processNum%3 == 0){
     cout<<"shell"<<endl;
     execl("./shellsort", "./shellsort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
