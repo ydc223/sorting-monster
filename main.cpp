@@ -77,7 +77,7 @@ Record * merge(Record * records1, int size1, Record * records2, int size2, char*
   return records;
 }
 
-Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfrecords, pid_t rootPid, int totalRecords) {
+Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfrecords, pid_t rootPid, int totalRecords, int random) {
   long int pidL;
   pid_t pid;
   
@@ -89,6 +89,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
   // printf("low: %d numofRecord: %d, depth: %d\n", low, numOfrecords, depth );
   Record * recordsMerged;
   int size = numOfrecords - (numOfrecords/2+low/2);
+  int high = numOfrecords/2+low/2;
 
   if (depth - 1 != 0) {
     //fork before proceeding
@@ -103,13 +104,14 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
       exit(1);
     }
 
+    // high = rand() % 30 + 1985;
     if((cpid = fork()) == 0) {
       //Child 1
       double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
       ticspersec = (double) sysconf(_SC_CLK_TCK);
       t1 = (double) times(&tb1);
 
-      Record* recordsMerged1 = split(filename, atrNumChar, depth - 1, low, numOfrecords/2+low/2, rootPid, totalRecords);
+      Record* recordsMerged1 = split(filename, atrNumChar, depth - 1, low, high, rootPid, totalRecords, random);
       close(fd1[0]);
       printToPipe(recordsMerged1, size, fd1[1]);
 
@@ -127,7 +129,8 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         ticspersec = (double) sysconf(_SC_CLK_TCK);
         t1 = (double) times(&tb1);
 
-        Record* recordsMerged2 = split(filename, atrNumChar, depth - 1, numOfrecords/2+low/2, numOfrecords, rootPid, totalRecords); 
+        
+        Record* recordsMerged2 = split(filename, atrNumChar, depth - 1, high, numOfrecords, rootPid, totalRecords, random); 
         close(fd2[0]);
         printToPipe(recordsMerged2, size, fd2[1]);
 
@@ -163,10 +166,11 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
       exit(1);
     }
 
+
     if((cpid = fork()) == 0) {
       //child 1
       close(fd1[0]);
-      callExec(filename, low, numOfrecords/2+low/2, atrNumChar, fd1[1], rootPid, totalRecords);
+      callExec(filename, low, high, atrNumChar, fd1[1], rootPid, totalRecords);
       perror("exec failure.. ");
       exit(1);
     } else {
@@ -175,7 +179,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         //child 2 
         // close reading end
         close(fd2[0]);
-        callExec(filename, numOfrecords/2+low/2, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords);
+        callExec(filename, high, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords);
         perror("exec failure.. ");
         exit(1);
       } else {
@@ -278,7 +282,7 @@ int main(int argc, char* argv[])
   rewind (fpb);
   numOfrecords = (int) lSize/ SIZEofBUFF;
   printf("Records found in file %d \n", numOfrecords);
-  numOfrecords = 9000;
+  numOfrecords = 160;
   
   signal(SIGUSR1, handle_sigusr1);
   signal(SIGUSR2, handle_sigusr2); 
@@ -299,7 +303,7 @@ int main(int argc, char* argv[])
     //child process
     Record * sortedRecords;
     close(fd[0]);
-    sortedRecords = split(filename, atrNumChar, depth, 0, numOfrecords, getppid(), numOfrecords);
+    sortedRecords = split(filename, atrNumChar, depth, 0, numOfrecords, getppid(), numOfrecords, random);
     printToPipe(sortedRecords, numOfrecords, fd[1]);    
 
     sm0_t2 = (double) times(&sm0_tb2);
