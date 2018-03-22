@@ -282,7 +282,7 @@ int main(int argc, char* argv[])
   rewind (fpb);
   numOfrecords = (int) lSize/ SIZEofBUFF;
   printf("Records found in file %d \n", numOfrecords);
-  numOfrecords = 160;
+  numOfrecords = 20;
   
   signal(SIGUSR1, handle_sigusr1);
   signal(SIGUSR2, handle_sigusr2); 

@@ -148,6 +148,8 @@ Record* readFile(char* fileName, int start, int end){
 	}
 
 	// printf("Records found in file %d \n", numOfrecords);
+	char nameBuf[SIZEofFIRST];
+	char lastBuf[SIZEofFIRST];
 
 	fseek(fpb, start*SIZEofBUFF, SEEK_SET);
 	for (i = 0; i < numOfrecords ; i++) {
@@ -159,12 +161,12 @@ Record* readFile(char* fileName, int start, int end){
 
 	  	// Record record = { .taxNum = taxNumber};
 
-	  	char nameBuf[SIZEofFIRST];
+	  	
 	  	fread(nameBuf, SIZEofFIRST, 1, fpb);
 	  	string firstN = nameBuf;
 	  	// strcpy(record.firstName, nameBuf);
 
-	  	char lastBuf[SIZEofFIRST];
+	  	
 	  	fread(lastBuf, SIZEofLAST, 1, fpb);
 	  	std::string lastN = lastBuf;
 	  	// strcpy(record.lastName, lastBuf);
@@ -176,7 +178,7 @@ Record* readFile(char* fileName, int start, int end){
 
 	  	Record record = { .taxNum = taxNumber, .firstName = firstN, .lastName = lastN, .income = inc };
 
-	  	// printf("%s %s\n", record2.firstName, record2.lastName);
+	  	//printf("%s %s\n", record.firstName, record2.lastName);
 
 	  	records[i] = record;
 	}
