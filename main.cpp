@@ -322,7 +322,8 @@ int main(int argc, char* argv[])
     printToFile(outFile, records, numOfrecords);
   }
 
-  checkNumOfSignalsMissing(sh_s, q_s, b_s, depth, outFile);
+
+  checkNumOfSignalsMissing((int)sh_s, (int)q_s, (int)b_s, depth, outFile);
   cout << "SH_S "<< sh_s << " Q_S " << q_s <<" B_S " << b_s << endl;
   
     //report time part 2

@@ -9,7 +9,7 @@ void swap(Record* a, Record* b);
 void printToPipe(Record* records, int numberOfRecords, int fd);
 Record * readFromPipe(int * fd, int numOfrecords);
 void printToFile(char* filename, Record* sortedRecords, int numOfrecords);
-void checkNumOfSignalsMissing(volatile sig_atomic_t sh_s, volatile sig_atomic_t q_s, volatile sig_atomic_t b_s, int level, char*);
+void checkNumOfSignalsMissing(int sh_s, int q_s, int b_s, int level, char*);
 void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t rootPid, int totalRecords);
 void reportTime(char * event, float realTime, float cpuTime);
 void reportAllTimestamps(char* timeFile, char* outFile);
