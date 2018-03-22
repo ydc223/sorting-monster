@@ -1,13 +1,16 @@
-Shellsort node running time was 0.010000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Shellsort node running time was 0.010000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Shellsort node running time was 0.010000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
 Shellsort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-A spliter/merger node running time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
 Quicksort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Quicksort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+A spliter/merger node running time was 0.010000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Bubblesort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Bubblesort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Quicksort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Shellsort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+A spliter/merger node running time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
 A spliter/merger node running time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
 Shellsort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
 A spliter/merger node running time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-A spliter/merger node running time was 0.030000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-A spliter/merger node running time was 0.030000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Spliter/Merger 0 time was 0.040000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Turnaround time was 0.040000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+A spliter/merger node running time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+A spliter/merger node running time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Spliter/Merger 0 time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Turnaround time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
