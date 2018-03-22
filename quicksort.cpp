@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/times.h>  /* times() */
+#include <unistd.h>     /* sysconf() */
 #include "utility.h"
 
 /* takes the last element as the pivot and sorts accordingly */
@@ -42,6 +44,12 @@ void quickSort(int atr, Record* records, int low, int high)
 
 int main(int argc, char* argv[])
 {
+
+	//report time part 1 in sorter
+	double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
+	ticspersec = (double) sysconf(_SC_CLK_TCK);
+	t1 = (double) times(&tb1);
+
 	char* fileName = "";
 	int start;
 	int end;
@@ -50,7 +58,7 @@ int main(int argc, char* argv[])
 	int fd;
 
 
-	if(argc != 6){
+	if(argc != 7){
 		printf("Incorrect invocation. Please specify file name, start (of the range), end (of the range), and atribute number \n");
 		exit(1);
 	}
@@ -60,6 +68,9 @@ int main(int argc, char* argv[])
 	end = atoi(argv[3]); 
 	atr = atoi(argv[4]); 
 	fd = atoi(argv[5]); 
+	pid_t rootPid;
+	long int pidL = atoi(argv[6]);
+	rootPid = (pid_t)pidL;
 	// sscanf(argv[5], "%p", (int **)&fd);
 
 
@@ -75,7 +86,12 @@ int main(int argc, char* argv[])
 	// 	printRecord(records[i]);
 	// }
 	printToPipe(records, numberOfRecords, fd);
+	kill(rootPid, SIGUSR2);
 
-
+	t2 = (double) times(&tb2);
+	cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
+	reportTime("Quicksort node running", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+	// printf("Run time of one of the quicksort node was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+	
 	return 0;
 }

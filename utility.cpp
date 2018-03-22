@@ -8,6 +8,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
+#include <math.h>
+#include <iostream>
+#include <fstream>
 #include "utility.h"
 
 
@@ -74,7 +77,7 @@ void printToPipe(Record* records, int numberOfRecords, int fd){
 }
 
 void printToFile(char* filename, Record* sortedRecords, int numOfrecords) {
-	FILE *f = fopen(filename, "w");
+	FILE *f = fopen(filename, "a");
     if (f == NULL)
     {
         printf("Error opening file!\n");
@@ -182,46 +185,118 @@ Record* readFile(char* fileName, int start, int end){
 	return records;
 }
 
+void reportMissingSigs(char* type, int missing, char* outFile){
+	if(strcmp(outFile,"none") == 0 ) {
+		printf("%d %s signal(s) missing\n", missing, type);
+	} else {
+		FILE *f = fopen(outFile, "a");
+	    if (f == NULL)
+	    {
+	        printf("Error opening file!\n");
+	        exit(1);
+	    }
+	    // printToPipe(sortedRecords, numOfrecords, f);
+	    fprintf(f, "%d %s signal(s) missing\n", missing, type);
+	    fclose(f);
+	}
+}
 
-// void printToPipe(Record* records, int numberOfRecords){
-// 	int fd;
-//     char * myfifo = "/tmp/myfifo";
+void checkNumOfSignalsMissing(volatile sig_atomic_t sh_s, volatile sig_atomic_t q_s, volatile sig_atomic_t b_s, int level, char * outFile) {
+  int totalNumberOfSignals = pow(2, level);
+  int sh_count = 0, q_count = 0, b_count = 0;
+  int missing;
+  for (int i = 0; i < totalNumberOfSignals; i++) {
+    if(i%3 == 0){
+      sh_count++;
+    } else if (i%3 == 1){
+      q_count++;
+    } else {
+      b_count++;
+    }
+  }
 
-//     /* create the FIFO (named pipe) */
-//     mkfifo(myfifo, 0666);
-
-//      // write "Hi" to the FIFO 
-//     fd = open(myfifo, O_WRONLY);
-//     write(fd, "Hi", sizeof("Hi"));
-//     kill(getppid(), SIGUSR1);
-//     close(fd);
-
-//     /* remove the FIFO */
-//     unlink(myfifo);
-
-// 	// int fd;
-// 	// // FIFO file path
-//  //    char * myfifo = "/tmp/myfifo";
-
-// 	// // if( !(access( myfifo, F_OK ) != -1) ) {
-// 	// //     if(mkfifo(myfifo, 0666) == -1) {
-// 	// // 		perror("myfifo");
-// 	// // 		exit(1);
-// 	// // 	}
-// 	// // }
+  if(sh_s != sh_count){
+    missing = sh_count - sh_s;
+    reportMissingSigs("shellsort", missing, outFile);
     
+  }
 
-// 	// fd = open(myfifo, O_WRONLY);
+  if(q_s != q_count){
+    missing = q_count - q_s;
+    reportMissingSigs("quicksort", missing, outFile);
+  }
 
-//  //    // Write the input arr2ing on FIFO
-//  //    // and close it
-//  //    // write(fd, records, 68*numberOfRecords);
-//  //    char start[10];
+  if(b_s != b_count){
+    missing = b_count - b_s;
+    reportMissingSigs("bubblesort", missing, outFile);
+  }
+}
 
-//  //  	sprintf(start, "%d", records[0].taxNum);
-//  //  	// printf("size of %s is %d\n", start, sizeof(start));
-//  //    write(fd, start, sizeof(start));
-//  //    close(fd);
-//  //    unlink(myfifo);
-//  //    exit(1);
-// }
+//This function finds process number based on the range, size and total number of records and calls the appropriate sorting program
+void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t rootPid, int totalRecords) {
+  char start[5];
+  char end[5];
+  char fdStr[30];
+  char root[30];
+
+  sprintf(fdStr, "%d", fd);
+  sprintf(start, "%d", low);
+  sprintf(end, "%d", high);
+  sprintf(root, "%ld", (long)rootPid);   
+
+  int size = high - low;
+  int processNum = totalRecords/size - (totalRecords - low)/size;
+  printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
+  if(processNum%3 == 0){
+    cout<<"shell"<<endl;
+    execl("./shellsort", "./shellsort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
+  } else if (processNum%3 == 1){
+    cout<<"quick"<<endl;
+    execl("./quicksort", "./quicksort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
+  } else {
+    cout<<"bubble"<<endl;
+    execl("./bubblesort", "./bubblesort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
+  }
+}
+
+
+void reportTime(char * event, float realTime, float cpuTime) {
+	FILE *f = fopen("reportedTime.txt", "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    
+    fprintf(f, "%s time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", event, realTime, cpuTime);
+
+    fclose(f);
+}
+
+void reportAllTimestamps(char* timeFile, char* outFile){
+	string line;
+	ifstream myfile (timeFile);
+	if (myfile.is_open())
+	{
+		while ( getline (myfile,line) )
+		{
+			if(strcmp(outFile,"none") == 0 ) {
+				cout << line << '\n';
+			} else {
+				ofstream myfile (outFile, std::fstream::app);
+				if (myfile.is_open())
+				{
+					myfile << line<<'\n';
+					myfile.close();
+				}
+				else cout << "Unable to open file";
+
+			    // printToPipe(sortedRecords, numOfrecords, f);
+			}		
+
+		}
+		myfile.close();
+	} else 
+		cout << "Unable to open file"; 
+
+}

@@ -19,20 +19,24 @@ using namespace std;
 #define SIZEofINT 4
 #define SIZEofINCOME 4
 
-
 volatile sig_atomic_t sh_s = 0;
 volatile sig_atomic_t q_s = 0;
+volatile sig_atomic_t b_s = 0;
 
 
 void handle_sigusr1(int signum) {
   cout<<"helloUSR1"<<endl;
-  sh_s = 1;
+  sh_s++;
 }
-
 
 void handle_sigusr2(int signum) {
   cout<<"helloUSR2"<<endl;
-  q_s = 1;
+  q_s++;
+}
+
+void handle_kill(int signum) {
+  cout<<"helloKILL"<<endl;
+  b_s++;
 }
 
 Record * merge(Record * records1, int size1, Record * records2, int size2, char* atrNumChar){
@@ -40,7 +44,6 @@ Record * merge(Record * records1, int size1, Record * records2, int size2, char*
   Record * records = new Record[size];
 
   int atrNum = atoi(atrNumChar);
-  // printf("-----------MERGEEEEE-----------\n");
 
   int i = 0, j = 0, k = 0;
   //if first one is greater then second
@@ -55,16 +58,14 @@ Record * merge(Record * records1, int size1, Record * records2, int size2, char*
     k++;
   }
 
-  /* Copy the remaining elements of L[], if there
-       are any */
+  /* Copy the remaining elements of L[], if there are any */
   while (i < size1) {
     records[k] = records1[i];
     i++;
     k++;
   }
  
-  /* Copy the remaining elements of R[], if there
-     are any */
+  /* Copy the remaining elements of R[], if there are any */
   while (j < size2)
   {
     records[k] = records2[j];
@@ -75,12 +76,9 @@ Record * merge(Record * records1, int size1, Record * records2, int size2, char*
   return records;
 }
 
-Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfrecords) {
-
-  char start[5];
-  char end[5];
-  char fdStr1[30];
-  char fdStr2[30];
+Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfrecords, pid_t rootPid, int totalRecords) {
+  long int pidL;
+  pid_t pid;
   
   pid_t cpid;
   pid_t cpid2;
@@ -89,6 +87,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
   int fd2[2];  // Used to store two ends of second pipe
   // printf("low: %d numofRecord: %d, depth: %d\n", low, numOfrecords, depth );
   Record * recordsMerged;
+  int size = numOfrecords - (numOfrecords/2+low/2);
 
   if (depth - 1 != 0) {
     //fork before proceeding
@@ -104,40 +103,52 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
     }
 
     if((cpid = fork()) == 0) {
-      Record* recordsMerged1 = split(filename, atrNumChar, depth - 1, low, numOfrecords/2+low/2);
+      //Child 1
+      double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
+      ticspersec = (double) sysconf(_SC_CLK_TCK);
+      t1 = (double) times(&tb1);
+
+      Record* recordsMerged1 = split(filename, atrNumChar, depth - 1, low, numOfrecords/2+low/2, rootPid, totalRecords);
       close(fd1[0]);
-      printToPipe(recordsMerged1, numOfrecords - (numOfrecords/2+low/2), fd1[1]);
+      printToPipe(recordsMerged1, size, fd1[1]);
+
+      t2 = (double) times(&tb2);
+      cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
+      reportTime("A spliter/merger node running", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+      // printf("Run time of a spliter/merger node was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+  
       exit(0);
     } else {
       //Parent
       if((cpid2 = fork()) == 0) {
         //Child 2
-        Record* recordsMerged2 = split(filename, atrNumChar, depth - 1, numOfrecords/2+low/2, numOfrecords); 
+        double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
+        ticspersec = (double) sysconf(_SC_CLK_TCK);
+        t1 = (double) times(&tb1);
+
+        Record* recordsMerged2 = split(filename, atrNumChar, depth - 1, numOfrecords/2+low/2, numOfrecords, rootPid, totalRecords); 
         close(fd2[0]);
-        printToPipe(recordsMerged2, numOfrecords - (numOfrecords/2+low/2), fd2[1]);
+        printToPipe(recordsMerged2, size, fd2[1]);
+
+        t2 = (double) times(&tb2);
+        cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
+        reportTime("A spliter/merger node running", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+        // printf("Run time of a spliter/merger node was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+  
         exit(0);
       } else {
         close(fd1[1]); 
         close(fd2[1]);
 
-        Record* records1 = readFromPipe(fd1, numOfrecords - (numOfrecords/2+low/2));
-        // printf("Pringting sorted records in main!! YEEEY!\n");
-        // printRecords(records1, numOfrecords/2);
-        
-        Record* records2 = readFromPipe(fd2, numOfrecords - (numOfrecords/2+low/2));
-        // printf("Pringting sorted records in main!! YEEEY!\n");
-        // printRecords(records2, numOfrecords/2);
+        Record* records1 = readFromPipe(fd1, size);
+        Record* records2 = readFromPipe(fd2, size);
 
         waitpid(cpid, NULL, 0);
         waitpid(cpid2, NULL, 0);
-        // wait(NULL);
-        // wait(NULL);
-        // printf("SHOULD E WRITTEN ONLY ONCE IF LEVEL IS 2!\n");
 
-
-        recordsMerged = merge(records1, numOfrecords - (numOfrecords/2+low/2), records2, numOfrecords - (numOfrecords/2+low/2), atrNumChar);
+        recordsMerged = merge(records1, size, records2, size, atrNumChar);
         // recordsMerged = records1;
-        // printRecords(recordsMerged, 2 * (numOfrecords - (numOfrecords/2+low/2)));
+        // printRecords(recordsMerged, 2 * size);
       }
     } 
 
@@ -154,48 +165,36 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
     if((cpid = fork()) == 0) {
       //child 1
       close(fd1[0]);
-      sprintf(fdStr1, "%d", fd1[1]);
-      sprintf(start, "%d", low);
-      sprintf(end, "%d", numOfrecords/2+low/2);
-      // printf("First start: %s, end: %s\n", start, end);
-      execl("./shellsort", "./shellsort", filename, start, end, atrNumChar, fdStr1,  (char*)NULL);
+      callExec(filename, low, numOfrecords/2+low/2, atrNumChar, fd1[1], rootPid, totalRecords);
       perror("exec failure.. ");
       exit(1);
     } else {
       //parent process 
       if((cpid2 = fork()) == 0){
         //child 2 
+        // close reading end
         close(fd2[0]);
-        sprintf(fdStr2, "%d", fd2[1]);
-        sprintf(start, "%d", numOfrecords/2+low/2);
-        sprintf(end, "%d", numOfrecords);
-        // printf("Second start: %s, end: %s\n", start, end);
-        execl("./quicksort", "./quicksort", filename, start, end, atrNumChar, fdStr2, (char*)NULL);
+        callExec(filename, numOfrecords/2+low/2, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords);
         perror("exec failure.. ");
         exit(1);
       } else {
         // Parent
+        //Close writing ends
         close(fd1[1]); 
         close(fd2[1]);
 
         // printf("Num of Records: %d, low: %d\n", numOfrecords, low);
-        int size = numOfrecords - (numOfrecords/2+low/2);
-
         // printf("Upper range bound: %d\n", numOfrecords);
         Record* records1 = readFromPipe(fd1, size);
         // printf("Pringting %d sorted records in main!! YEEEY!\n", size);
         // printRecords(records1, size);
         
         Record* records2 = readFromPipe(fd2, size);
-
         // printf("Pringting %d sorted records in main!! YEEEY!\n", size);
         // printRecords(records2, size);
 
         waitpid(cpid, NULL, 0);
         waitpid(cpid2, NULL, 0);
-        wait(NULL);
-        wait(NULL);
-
 
         recordsMerged = merge(records1, size, records2, size, atrNumChar);
         // printRecords(recordsMerged, numOfrecords);
@@ -221,20 +220,16 @@ int main(int argc, char* argv[])
   char * filename = "";
   int atrNum = 0;
   char* atrNumChar;
-  char *outFile = "outputFile.txt";
+  char *outFile = "none";
   int random = 0;
   int numOfrecords;
   long lSize;
   FILE *fpb;
   int status;
   pid_t pid;
-  Record * sortedRecords;
+  int fd[2];
 
-  // char * myfifo = "/tmp/myfifo";
- 
-    // Creating the named file(FIFO)
-    // mkfifo(<pathname>, <permission>)
-  // mkfifo(myfifo, 0666);
+  //read the flags and get the parametors from the command line
   while(i < argc){
     char *flag = (argv[i]);
     if(strncmp (flag,"-d", 2) == 0){
@@ -265,6 +260,11 @@ int main(int argc, char* argv[])
     }
   }
 
+  //Reset a file used to report time and output file
+  char* timeFile = "reportedTime.txt";
+  fclose(fopen(timeFile, "w"));
+  fclose(fopen(outFile, "w"));
+
   fpb = fopen (filename,"rb");
   if (fpb==NULL) {
       printf("Cannot open binary file\n");
@@ -277,37 +277,61 @@ int main(int argc, char* argv[])
   rewind (fpb);
   numOfrecords = (int) lSize/ SIZEofBUFF;
   printf("Records found in file %d \n", numOfrecords);
-  numOfrecords = 160;
+  numOfrecords = 9000;
   
   signal(SIGUSR1, handle_sigusr1);
   signal(SIGUSR2, handle_sigusr2); 
+  signal(SIGCONT, handle_kill); 
 
 
-  // if (pipe(fd1) == -1) {
-  //   fprintf(stderr, "Pipe Failed" );
-  //   exit(1);
-  // }
+  if (pipe(fd) == -1) {
+    fprintf(stderr, "Pipe Failed" );
+    exit(1);
+  }
 
   //root has one child
   if((pid = fork()) == 0) {
+    double sm0_t1, sm0_t2, sm0_cpu_time; struct tms sm0_tb1, sm0_tb2; double sm0_ticspersec;
+    sm0_ticspersec = (double) sysconf(_SC_CLK_TCK);
+    sm0_t1 = (double) times(&sm0_tb1);
+
     //child process
-    sortedRecords = split(filename, atrNumChar, depth, 0, numOfrecords);
-    printf("\n\n" );
-    printRecords(sortedRecords, numOfrecords);
-    printToFile(outFile, sortedRecords, numOfrecords);
+    Record * sortedRecords;
+    close(fd[0]);
+    sortedRecords = split(filename, atrNumChar, depth, 0, numOfrecords, getppid(), numOfrecords);
+    printToPipe(sortedRecords, numOfrecords, fd[1]);    
+
+    sm0_t2 = (double) times(&sm0_tb2);
+    sm0_cpu_time = (double) ((sm0_tb2.tms_utime + sm0_tb2.tms_stime) - (sm0_tb1.tms_utime + sm0_tb1.tms_stime));
+
+    reportTime("Spliter/Merger 0", (sm0_t2 - sm0_t1) / sm0_ticspersec, sm0_cpu_time / sm0_ticspersec);
+    // printf("Spliter/Merger 0 time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (sm0_t2 - sm0_t1) / sm0_ticspersec, sm0_cpu_time / sm0_ticspersec);
     
     exit(0);
-  } else{
-    waitpid(pid, NULL, 0);
+  } 
 
+  close(fd[1]);
+  Record* records = readFromPipe(fd, numOfrecords);
+  waitpid(pid, NULL, 0);
+  close(fd[0]);
+  
+  if(strcmp(outFile,"none") == 0 ){
+    printRecords(records, numOfrecords);
+  } else {
+    printToFile(outFile, records, numOfrecords);
   }
 
+  checkNumOfSignalsMissing(sh_s, q_s, b_s, depth, outFile);
+  cout << "SH_S "<< sh_s << " Q_S " << q_s <<" B_S " << b_s << endl;
+  
     //report time part 2
   // printf("%d\n", merge);
   t2 = (double) times(&tb2);
   cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
-  printf("Run time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+  reportTime("Turnaround", (t2 - t1) / ticspersec, cpu_time / ticspersec);
+
+  reportAllTimestamps(timeFile, outFile);
+  // printf("Turnaround time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
   return 0;
-  
 }
 
