@@ -5,6 +5,9 @@ My program consists of 4 excecutable files and 5 main source code files. Among t
 
 If the flag -o is not specified, then the output would be written to standard out. This includes reporting of missing signals, if none of the signals are missing nothing will be reported. If the flag -r is not included, the records will be distributed in equal sizes among the sorters. 
 
+The program is structured in a way that the main logic is implemented in the file called main.cpp. It contains the recursive calls to split function, which decides based on the depth level whether to split further or call the sorter programs. All the helper functions are located in utility.cpp, including reading and writing to and from the files and pipes. Some additional functions are writter there as well. 
+
+
 
 
 

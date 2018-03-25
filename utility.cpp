@@ -235,7 +235,7 @@ void checkNumOfSignalsMissing(volatile sig_atomic_t sh_s, volatile sig_atomic_t 
 }
 
 //This function finds process number based on the range, size and total number of records and calls the appropriate sorting program
-void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t rootPid, int totalRecords) {
+void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t rootPid, int totalRecords, int processCount, int rand) {
   char start[5];
   char end[5];
   char fdStr[30];
@@ -248,7 +248,10 @@ void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t
 
   int size = high - low;
   int processNum = totalRecords/size - (totalRecords - low)/size;
-  printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
+  if(rand){
+  	processNum = processCount;
+  }
+  // printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
   if(processNum%3 == 0){
     cout<<"shell"<<endl;
     execl("./shellsort", "./shellsort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);

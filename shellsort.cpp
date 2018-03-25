@@ -71,9 +71,7 @@ int main(int argc, char* argv[])
 	}
 		
 	// printf("Pringting sorted records in bubblesort!! YEEEY!\n");
-	// for (int i = 0; i < numberOfRecords; i++){
-	// 	printRecord(records[i]);
-	// }
+	// printRecords(records, numberOfRecords);
 
 	printToPipe(records, numberOfRecords, fd);
 	kill(rootPid, SIGUSR1);

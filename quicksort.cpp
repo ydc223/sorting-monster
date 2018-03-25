@@ -82,10 +82,9 @@ int main(int argc, char* argv[])
 	quickSort(atr, records, 0, numberOfRecords-1);
 
 		
-	// printf("Pringting sorted records in quicksort!! YEEEY!\n");
-	// for (int i = 0; i < numberOfRecords; i++){
-	// 	printRecord(records[i]);
-	// }
+	// printf("Pringting sorted records in bubblesort!! YEEEY!\n");
+	// printRecords(records, numberOfRecords);
+	
 	printToPipe(records, numberOfRecords, fd);
 	kill(rootPid, SIGUSR2);
 
