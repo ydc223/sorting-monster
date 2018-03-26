@@ -98,7 +98,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
   int size2 = numOfrecords - (numOfrecords/2+low/2);
 
 
-  if (depth - 1 != 0) {
+  if (depth - 1 > 0) {
     //fork before proceeding
     // explore the bugs and fix
     // have fun 
@@ -194,7 +194,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
 
       //child 1
       close(fd1[0]);
-      callExec(filename, low, mid, atrNumChar, fd1[1], rootPid, totalRecords, processNum, random);
+      callExec(filename, low, mid, atrNumChar, fd1[1], rootPid, totalRecords, processNum+1, random);
       perror("exec failure.. ");
       exit(1);
       
@@ -205,7 +205,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         //child 2 
         // close reading end
         close(fd2[0]);
-        callExec(filename, mid, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords, processNum, random);
+        callExec(filename, mid, numOfrecords, atrNumChar, fd2[1], rootPid, totalRecords, processNum+2, random);
         perror("exec failure.. ");
         exit(1);
         
@@ -338,7 +338,6 @@ int main(int argc, char* argv[])
 
     reportTime("Spliter/Merger 0", (sm0_t2 - sm0_t1) / sm0_ticspersec, sm0_cpu_time / sm0_ticspersec);
     // printf("Spliter/Merger 0 time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (sm0_t2 - sm0_t1) / sm0_ticspersec, sm0_cpu_time / sm0_ticspersec);
-    
     exit(0);
   } 
 

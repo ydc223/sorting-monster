@@ -249,7 +249,7 @@ void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t
   int size = high - low;
   int processNum = totalRecords/size - (totalRecords - low)/size;
   if(rand){
-  	processNum = processCount;
+  	processNum = processCount+2;
   }
   // printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
   if(processNum%3 == 0){
