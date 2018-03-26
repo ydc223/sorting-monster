@@ -72,26 +72,19 @@ int main(int argc, char* argv[])
 	pid_t rootPid;
 	long int pidL = atoi(argv[6]);
 	rootPid = (pid_t)pidL;
-	// sscanf(argv[5], "%p", (int **)&fd);
 
 
 	int numberOfRecords = end - start;
-	// printf("%s, %d, %d, %d, %d\n", fileName, start, end, atr, fd);
 	Record *records = readFile(fileName, start, end);
 
 	quickSort(atr, records, 0, numberOfRecords-1);
 
-		
-	// printf("Pringting sorted records in bubblesort!! YEEEY!\n");
-	// printRecords(records, numberOfRecords);
-	
 	printToPipe(records, numberOfRecords, fd);
 	kill(rootPid, SIGUSR2);
 
 	t2 = (double) times(&tb2);
 	cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
 	reportTime("Quicksort node running", (t2 - t1) / ticspersec, cpu_time / ticspersec);
-	// printf("Run time of one of the quicksort node was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
 	
 	return 0;
 }

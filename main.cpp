@@ -24,30 +24,28 @@ volatile sig_atomic_t sh_s = 0;
 volatile sig_atomic_t q_s = 0;
 volatile sig_atomic_t b_s = 0;
 
-
+//shellsort signal handler
 void handle_sigusr1(int signum) {
-  // cout<<"helloUSR1"<<endl;
   sh_s++;
 }
 
+//quicksort signal handler
 void handle_sigusr2(int signum) {
-  // cout<<"helloUSR2"<<endl;
   q_s++;
 }
 
+//bubblesort signal handler
 void handle_kill(int signum) {
-  // cout<<"helloKILL"<<endl;
   b_s++;
 }
 
+//This function merges the records given in two arrays and returns the merged array
 Record * merge(Record * records1, int size1, Record * records2, int size2, char* atrNumChar){
   int size = size1 + size2;
   Record * records = new Record[size];
-  // cout << "size1: "<<size1<<" size2 "<< size2<<endl;
-
   int atrNum = atoi(atrNumChar);
-
   int i = 0, j = 0, k = 0;
+
   //if first one is greater then second
   while (i < size1 && j < size2) {
     if (atrCompare(atrNum, records1[i], records2[j])){
@@ -74,13 +72,12 @@ Record * merge(Record * records1, int size1, Record * records2, int size2, char*
     j++;
     k++;
   } 
-
-  // printf("Pringting sorted records in merge!! YEEEY!\n");
-  // printRecords(records, numberOfRecords);
-
   return records;
 }
 
+/* This function decided whether to create an extra level of spliter/merger nodes or to call sorters. 
+  It is recursive and it calls the sorters only when the depth is 0. Each time the function runs depth parametor gets decremented.
+  It executes either splitters/mergers or sorters, it forks, meneges prints and reads from pipes and manages merges */
 Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfrecords, pid_t rootPid, int totalRecords, int random, int processNum) {
   long int pidL;
   pid_t pid;
@@ -99,9 +96,8 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
 
 
   if (depth - 1 > 0) {
-    //fork before proceeding
-    // explore the bugs and fix
-    // have fun 
+
+    //creating pipes
     if (pipe(fd1) == -1) {
       fprintf(stderr, "Pipe Failed" );
       exit(1);
@@ -113,11 +109,8 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
 
     if(random){
       mid = rand() % size + low;
-
       size1 = mid - low;
       size2 = numOfrecords - mid;
-
-      cout<<"Mid if rand sm: " << mid<<"  "<< low <<":"<<numOfrecords<<" size1: "<<size1<<" size2 "<<size2<<" "<<processNum<<endl;
     }
     
     if((cpid = fork()) == 0) {
@@ -133,11 +126,11 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
       t2 = (double) times(&tb2);
       cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
       reportTime("A spliter/merger node running", (t2 - t1) / ticspersec, cpu_time / ticspersec);
-      // printf("Run time of a spliter/merger node was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
       
       exit(0);
     } else {
       //Parent
+
       if((cpid2 = fork()) == 0) {
         //Child 2
         double t1, t2, cpu_time; struct tms tb1, tb2; double ticspersec;
@@ -156,6 +149,7 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
   
         exit(0);
       } else {
+        // Parent
         close(fd1[1]); 
         close(fd2[1]);
 
@@ -166,12 +160,11 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         waitpid(cpid2, NULL, 0);
 
         recordsMerged = merge(records1, size1, records2, size2, atrNumChar);
-        // recordsMerged = records1;
-        // printRecords(recordsMerged, 2 * size);
       }
     } 
 
   } else {
+    //Create pipes
     if (pipe(fd1) == -1) {
       fprintf(stderr, "Pipe Failed" );
       exit(1);
@@ -185,23 +178,20 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
       mid = rand() % size + low;
       size1 = mid - low;
       size2 = numOfrecords - mid;
-      cout<<"Mid if rand sorter: " << mid<<"  "<< low <<":"<<numOfrecords<<" size1: "<<size1<<" size2 "<<size2<< " "<<processNum<<endl;
     }
 
     if((cpid = fork()) == 0) {
 
-      cout<<"Process Num sorter1: "<<(processNum+1)%3<<" " <<low<<" "<< mid<<endl;
-
       //child 1
+      // close reading end
       close(fd1[0]);
       callExec(filename, low, mid, atrNumChar, fd1[1], rootPid, totalRecords, processNum+1, random);
       perror("exec failure.. ");
       exit(1);
       
     } else {
-      //parent process 
+
       if((cpid2 = fork()) == 0){
-        cout<<"Process Num sorter2: "<<(processNum+2)%3<<" " <<mid<<" "<< numOfrecords<<endl;
         //child 2 
         // close reading end
         close(fd2[0]);
@@ -215,30 +205,25 @@ Record* split(char * filename, char * atrNumChar, int depth, int low, int numOfr
         close(fd1[1]); 
         close(fd2[1]);
 
-        // printf("Num of Records: %d, low: %d\n", numOfrecords, low);
-        // printf("Upper range bound: %d\n", numOfrecords);
         Record* records1 = readFromPipe(fd1, size1);
-        // printf("Pringting %d sorted records in main!! YEEEY!\n", size);
-        // printRecords(records1, size);
         
         Record* records2 = readFromPipe(fd2, size2);
-        // printf("Pringting %d sorted records in main!! YEEEY!\n", size);
-        // printRecords(records2, size);
 
         waitpid(cpid, NULL, 0);
         waitpid(cpid2, NULL, 0);
 
         recordsMerged = merge(records1, size1, records2, size2, atrNumChar);
-        // printRecords(recordsMerged, numOfrecords);
+
         close(fd1[0]);
         close(fd2[0]);
       }
     }
     wait(NULL);
-
   }
+
   return recordsMerged;
 }
+
 
 int main(int argc, char* argv[])
 {
@@ -266,11 +251,11 @@ int main(int argc, char* argv[])
     char *flag = (argv[i]);
     if(strncmp (flag,"-d", 2) == 0){
       depth = std::atoi(argv[i+1]);
-      printf("Depth level: %d\n", depth);
+      // printf("Depth level: %d\n", depth);
       i+=2;
     } else if(strncmp (flag,"-f", 2) == 0){
       filename = argv[i+1];
-      printf("Filename: %s\n", filename);
+      // printf("Filename: %s\n", filename);
       i+=2;
     } else if(strncmp (flag,"-a", 2) == 0){
       atrNum = std::atoi(argv[i+1]);
@@ -279,15 +264,15 @@ int main(int argc, char* argv[])
         printf("Please input valid attribute number\n");
         return 0;
       }
-      printf("Atribute Number %d\n", atrNum);
+      // printf("Atribute Number %d\n", atrNum);
       i+=2;
     } else if(strncmp (flag,"-o", 2) == 0){
       outFile = argv[i+1];
-      printf("Output file: %s\n", outFile);
+      // printf("Output file: %s\n", outFile);
       i+=2;
     } else if(strncmp (flag,"-r", 2) == 0){
       random = 1;
-      printf("r\n");
+      // printf("r\n");
       i++;
     }
   }
@@ -308,8 +293,7 @@ int main(int argc, char* argv[])
   lSize = ftell (fpb);
   rewind (fpb);
   numOfrecords = (int) lSize/ SIZEofBUFF;
-  // printf("Records found in file %d \n", numOfrecords);
-  numOfrecords = 160;
+  // numOfrecords = 160;
   
   signal(SIGUSR1, handle_sigusr1);
   signal(SIGUSR2, handle_sigusr2); 
@@ -337,7 +321,6 @@ int main(int argc, char* argv[])
     sm0_cpu_time = (double) ((sm0_tb2.tms_utime + sm0_tb2.tms_stime) - (sm0_tb1.tms_utime + sm0_tb1.tms_stime));
 
     reportTime("Spliter/Merger 0", (sm0_t2 - sm0_t1) / sm0_ticspersec, sm0_cpu_time / sm0_ticspersec);
-    // printf("Spliter/Merger 0 time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (sm0_t2 - sm0_t1) / sm0_ticspersec, sm0_cpu_time / sm0_ticspersec);
     exit(0);
   } 
 
@@ -352,18 +335,14 @@ int main(int argc, char* argv[])
     printToFile(outFile, records, numOfrecords);
   }
 
-
   checkNumOfSignalsMissing((int)sh_s, (int)q_s, (int)b_s, depth, outFile);
-  cout << "SH_S "<< sh_s << " Q_S " << q_s <<" B_S " << b_s << endl;
   
     //report time part 2
-  // printf("%d\n", merge);
   t2 = (double) times(&tb2);
   cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
   reportTime("Turnaround", (t2 - t1) / ticspersec, cpu_time / ticspersec);
 
   reportAllTimestamps(timeFile, outFile);
-  // printf("Turnaround time was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
   return 0;
 }
 

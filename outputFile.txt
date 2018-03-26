@@ -158,7 +158,7 @@ Tax Number: 99533, Name: GRISEL PRESTON, Income: 22926.560547
 Tax Number: 99869, Name: TANGELA DARRICK, Income: 20220.400391
 Tax Number: 100251, Name: KANDICE CRISTY, Income: 63138.441406
 Tax Number: 100595, Name: SHERIDAN SHILOH, Income: 29159.419922
+Quicksort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
 Shellsort node running time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Quicksort node running time was 0.010000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Spliter/Merger 0 time was 0.020000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
-Turnaround time was 0.030000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Spliter/Merger 0 time was 0.000000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).
+Turnaround time was 0.010000 sec (REAL time) although we used the CPU for 0.000000 sec (CPU time).

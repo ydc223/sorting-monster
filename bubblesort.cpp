@@ -48,16 +48,12 @@ int main(int argc, char* argv[])
 	       }
 	   }
 	}
-		
-	// printf("Pringting sorted records in bubblesort!! YEEEY!\n");
-	// printRecords(records, numberOfRecords);
+	
    	printToPipe(records, numberOfRecords, fd);
 	kill(rootPid, SIGCONT);
 
 	t2 = (double) times(&tb2);
 	cpu_time = (double) ((tb2.tms_utime + tb2.tms_stime) - (tb1.tms_utime + tb1.tms_stime));
 	reportTime("Bubblesort node running", (t2 - t1) / ticspersec, cpu_time / ticspersec);
-	// printf("Run time of one of the bubblesort node was %lf sec (REAL time) although we used the CPU for %lf sec (CPU time).\n", (t2 - t1) / ticspersec, cpu_time / ticspersec);
-
 	return 0;
 }

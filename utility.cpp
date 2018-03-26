@@ -41,9 +41,6 @@ Record * readFromPipe(int * fd, int numOfrecords) {
     read(fd[0], str1, 4);
     float inc;
     memcpy(&inc, str1, SIZEofINCOME);
-    // printf("Recieved: %d of ", taxNumber);
-    // cout << firstN << " " << lastN << " "; 
-    // printf("with income %f\n", inc);
 
     Record record = { .taxNum = taxNumber, .firstName = firstN, .lastName = lastN, .income = inc };
     records[i] = record;
@@ -102,8 +99,6 @@ void swap(Record* a, Record* b)
 void printRecords(Record * record, int numOfrecords){
 	for (int i = 0; i < numOfrecords; i++){
 		printf("Tax Number: %d ", record[i].taxNum);
-		// printf("First Name: %s ", record.firstName);
-		// printf("Last Name: %s ", record.lastName);
 		std::cout << "First Name: " << record[i].firstName<<" ";
 		std::cout << "Last Name: " << record[i].lastName << " ";
 		printf("Income: %f\n", record[i].income);
@@ -147,7 +142,6 @@ Record* readFile(char* fileName, int start, int end){
 		exit(1);
 	}
 
-	// printf("Records found in file %d \n", numOfrecords);
 	char nameBuf[SIZEofFIRST];
 	char lastBuf[SIZEofFIRST];
 
@@ -158,28 +152,18 @@ Record* readFile(char* fileName, int start, int end){
 	  	fread(buffer, SIZEofINT, 1, fpb);
 	  	int taxNumber;
 	  	memcpy(&taxNumber, buffer, SIZEofINT);
-
-	  	// Record record = { .taxNum = taxNumber};
-
 	  	
 	  	fread(nameBuf, SIZEofFIRST, 1, fpb);
 	  	string firstN = nameBuf;
-	  	// strcpy(record.firstName, nameBuf);
-
 	  	
 	  	fread(lastBuf, SIZEofLAST, 1, fpb);
 	  	std::string lastN = lastBuf;
-	  	// strcpy(record.lastName, lastBuf);
 
 	  	fread(buffer, SIZEofINCOME, 1, fpb);
 	  	float inc;
 	  	memcpy(&inc, buffer, SIZEofINCOME);
-	  	// record.income = inc;
 
 	  	Record record = { .taxNum = taxNumber, .firstName = firstN, .lastName = lastN, .income = inc };
-
-	  	//printf("%s %s\n", record.firstName, record2.lastName);
-
 	  	records[i] = record;
 	}
 
@@ -187,6 +171,7 @@ Record* readFile(char* fileName, int start, int end){
 	return records;
 }
 
+//outputs which signals are missing
 void reportMissingSigs(char* type, int missing, char* outFile){
 	if(strcmp(outFile,"none") == 0 ) {
 		printf("%d %s signal(s) missing\n", missing, type);
@@ -203,6 +188,7 @@ void reportMissingSigs(char* type, int missing, char* outFile){
 	}
 }
 
+//finds how many signals are missing
 void checkNumOfSignalsMissing(volatile sig_atomic_t sh_s, volatile sig_atomic_t q_s, volatile sig_atomic_t b_s, int level, char * outFile) {
   int totalNumberOfSignals = pow(2, level);
   int sh_count = 0, q_count = 0, b_count = 0;
@@ -220,7 +206,6 @@ void checkNumOfSignalsMissing(volatile sig_atomic_t sh_s, volatile sig_atomic_t 
   if(sh_s != sh_count){
     missing = sh_count - sh_s;
     reportMissingSigs("shellsort", missing, outFile);
-    
   }
 
   if(q_s != q_count){
@@ -248,23 +233,23 @@ void callExec(char* filename, int low, int high, char* atrNumChar, int fd, pid_t
 
   int size = high - low;
   int processNum = totalRecords/size - (totalRecords - low)/size;
+
+  // This is not entirely accurate way to determine the program according to the given specifications, however, 
+  // I spent forever trying to figure out what would be the best way
   if(rand){
   	processNum = processCount+2;
   }
-  // printf("Low: %d high: %d size: %d processNum: %d\n", low, high, size, processNum);
+
   if(processNum%3 == 0){
-    cout<<"shell"<<endl;
     execl("./shellsort", "./shellsort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
   } else if (processNum%3 == 1){
-    cout<<"quick"<<endl;
     execl("./quicksort", "./quicksort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
   } else {
-    cout<<"bubble"<<endl;
     execl("./bubblesort", "./bubblesort", filename, start, end, atrNumChar, fdStr, root, (char*)NULL);
   }
 }
 
-
+// Depending on whether the output file is specified, outputs the information to the file of standard out
 void reportTime(char * event, float realTime, float cpuTime) {
 	FILE *f = fopen("reportedTime.txt", "a");
     if (f == NULL)
@@ -295,8 +280,6 @@ void reportAllTimestamps(char* timeFile, char* outFile){
 					myfile.close();
 				}
 				else cout << "Unable to open file";
-
-			    // printToPipe(sortedRecords, numOfrecords, f);
 			}		
 
 		}
